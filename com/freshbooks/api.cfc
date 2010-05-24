@@ -22,11 +22,21 @@
 		<cfoutput><request method="#arguments.method#">#trim(arguments.request)#</request></cfoutput>
 		</cfxml>
 		
-		<cfhttp url="#variables.serviceURL#" method="post" username="#variables.authToken#" password="x">
-			<cfhttpparam name="request" value="#local.request#" type="body" />
-		</cfhttp>
-		
+		<cftry>
+			<cfhttp url="#variables.serviceURL#" method="post" username="#variables.authToken#" password="x">
+				<cfhttpparam name="request" value="#local.request#" type="body" />
+			</cfhttp>
+			
+			<cfcatch>
+				<cfthrow type="com.freshbooks.api" message="There was a problem communicating with Freshbooks." />
+			</cfcatch>
+		</cftry>
+				
 		<cfset local.response['xml'] = xmlParse(cfhttp.fileContent) />
+		
+		<cfif cfhttp.ResponseHeader.Status_Code NEQ 200>
+			<cfthrow type="com.freshbooks.api" message="API Call Failed - Message: #local.response.xml.response.error.xmlText#" />
+		</cfif>
 		
 		<cfif arguments.debug>
 			<cfdump var="#cfhttp#"><cfabort>
